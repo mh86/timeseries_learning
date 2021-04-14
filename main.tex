@@ -1,0 +1,127 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{amsthm}
+\usepackage{enumitem}
+\usepackage[legalpaper, margin=1in]{geometry}
+\usepackage{amsfonts}
+\usepackage[mathscr]{eucal}
+\usepackage{hyperref}
+\newtheorem{thm}{Theorem}
+%this makes it so that everything labelled thm is numbered by section
+\newtheorem{claim}[thm]{Claim}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{conclusion}{Conclusion}
+%\newtheorem{remark}[thm]{Remark}
+\newtheorem{lemma}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{prob}[thm]{Problem}
+%\newtheorem{exam}[thm]{Example}
+\theoremstyle{definition}
+%this makes the following things non-italicized
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{postulate}{Postulate}
+\newtheorem{remark}[thm]{Remark}
+\newtheorem{discrepency}[thm]{Discrepency}
+\newtheorem{exam}[thm]{Example}
+\newtheorem{innercustomthm}{Word Postulate}
+\newenvironment{customthm}[1]
+{\renewcommand\theinnercustomthm{#1}\innercustomthm}
+{\endinnercustomthm}
+
+\title{Time Series Analysis Notes}
+% \author{Mozahid Haque}
+% \date{October 2020}
+
+\begin{document}
+\maketitle
+\section{Overview of Time Series Characteristics}
+\begin{defn}
+A \textbf{univariate time series} is a sequence of measurements of one variable at regular time steps.
+\end{defn} 
+\noindent Such data need not be IID.
+
+\subsection{Objectives of Analysis}
+\begin{enumerate}
+    \item Describe important features of any time series pattern
+    \item Explain how past affects future or how two time series "interact"
+    \item Forecasting
+    \item Use time series as a control standard, e.g., measurements of the quality of some manufacturing product
+\end{enumerate}
+
+\subsection{Model Types and Considerations}
+There are two basic types:
+\begin{enumerate}
+    \item Relating time series values to past values and past prediction errors -- called Autoregressive Integrated Moving Average or ARIMA models.
+    \item Regular regression models with time indices as x-variables.
+\end{enumerate}
+
+\noindent Initial data exploration:
+\begin{itemize}
+    \item Trend -- overall progression of measurements
+    \item Seasonality -- periodic behavior based around calendar intervals such as seasons, quarters, months, weeks, etc.
+    \item Outliers -- data away from original data or away from some manipulation of it
+    \item Long-run Cycle -- periodic behavior unrelated to seasonality type
+    \item Constant Variance -- variance changing or not
+    \item Abrupt Changes -- significant disturbances to series or variance or other things
+\end{itemize}
+
+\subsection{Autoregressive Models:  Autocorrelation and Partial Autocorrelation}
+\begin{defn}
+Let $\{y_t\}_{t=1}^n$ be a time series indexed by $t$. An \textbf{autoregressive model} is one where time series values are regressed on previous values.  For example, a first-order autoregression AR(1) would look like:
+\[ y_t = \beta_0 + \beta_1 y_{t-1} + \epsilon_t \]
+and a second-order autoregression AR(2) would look like:
+\[ y_t = \beta_0 + \beta_1 y_{t-1} + \beta_2 y_{t-2} + \epsilon_t. \]
+In general, a $k^\text{th}$-order autoregression AR(k) is given by 
+\[ y_t =  \left( \beta_0, \beta_1, \hdots, \beta_n, 1 \right) \left( 1, y_{t-1}, \hdots, \beta_{t-n}, \epsilon_t \right)^T. \]
+Usually the errors $\epsilon_t \overset{iid}{\sim}N(0, \sigma_{\epsilon}^2)$ and independent of $y$.
+\end{defn}
+
+This begs the question:
+How do we choose the order for a given time series?
+There are two methods:
+\begin{enumerate}
+    \item Autocorrelation function (ACF) and
+    \item Partial Autocorrelation function (PACF).
+\end{enumerate}
+\begin{defn}
+The coefficient of correlation between two values in a time series given by:
+\[ \text{Corr}(y_t, y_{t+k}) = r_k = \frac{c_k}{c_0} ~~~~\text{where}~~~~
+c_k = \frac{1}{n} \sum_{t=1}^{n-k} (y_t - \bar{y})(y_{t+k} - \bar{y}) \]
+is called the \textbf{autocorrelation function (ACF)}.
+Recall what familiar term $c_0$ is.  Notice the similarity to the covariance formula which is meant to exhibit the linear relationship between two variables.  In this case, this is the covariance (or linear relationship) of lagged values.  Here the \textbf{lag} is given by \textbf{k}.
+\end{defn}
+
+This is one method.  This method includes in it the influence of other lags on $y_t$.  The second method removes this influence of the other lags in between...
+\begin{defn}
+Here the \textbf{Partial Autocorrelation Function (PACF)} is given by
+\[ f_k = 
+\begin{cases} 
+      r_1 = \text{Corr}(y_t, y_0) & \text{if}~ k=1; \\
+      \text{Corr}(y_t - y_t^{t-1}, y_0 - y_0^{k-1}) & \text{if}~ k \geq 2
+   \end{cases}.
+\]
+Essentially, this has the effect of determining the linear correlation between $y_t$ and $y_{t+k}$ but removing the linear dependence of lags in between $t$ and $t+k$, namely $t_i$ such that $t < t_i < t+k$.  One can also think of this as subtracting away the projection of $y_t$ on the linear subspace spanned by $y_{t+1}, \hdots, y_{t+k-1}$.
+\end{defn}
+
+We can additionally complicate the whole thing by considering certain trend behavior within our original time series via decomposition.
+
+\subsection{Complexifying ACF/PACF via Decomposition and/or Higher Order Trends}
+The typical decomposition of a time series involves:
+\begin{itemize}
+    \item overall trend, $m_t$
+    \item seasonality, $s_t$, and
+    \item error, $\epsilon_t$
+\end{itemize}
+so that
+\[ y_t = m_t + s_t + \epsilon_t. \]
+Typical estimation involves first estimating the overall trend through linear filters.  One example of this is a moving average given by some "window" size:
+\[ \hat{m_t} = \sum_{k=-a}^a \left( \frac{1}{1+2a} \right) y_{t+k}. \]
+We can experiment with the window size to get a feel for a good overall trend.  Then once this is done, we can estimate the seasonality by looking at what remains:
+\[ \hat{s_t} = y_t - \hat{m_t}. \]
+Note that this $\hat{s_t}$ depends on the window size.  So we can take the average of the window sized seasonality estimates to fix a single $s_t$.  Then this gives us a way to calculate the error:
+\[ \epsilon_t = x_t - \hat{m_t} - \hat{s_t}. \]
+Luckily there are packages for such decomposition.
+
+Another way to complexify our model for our time series is to add quadratic trends to the model by considering not just linear time factors $t$, but higher order factors and interactions such as $t^2$, $t^3$, etc.
+\end{document}
